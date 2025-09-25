@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   llm:
-    image: vllm/vllm-openai:0.2.3
+    image: vllm/vllm-openai:nightly
     ports:
       - "8000:8000"
     shm_size: "16gb"
@@ -11,11 +11,11 @@ services:
       --model NousResearch/Nous-Hermes-2-Mistral-7B-DPO
       --host 0.0.0.0
       --port 8000
-      --trust-remote-code
-      --gpu-memory-utilization 0.88
+      --gpu-memory-utilization 0.85
       --max-model-len 4096
-      --max-num-batched-tokens 16384
-      --max-num-seqs 128
+      --max-num-batched-tokens 8192
+      --max-num-seqs 64
+      --enforce-eager
       --disable-custom-all-reduce
     volumes:
       - hf_cache:/root/.cache/huggingface
