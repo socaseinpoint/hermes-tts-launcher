@@ -23,3 +23,15 @@ services:
         reservations:
           devices:
             - capabilities:
+                - gpu
+
+  tts:
+    build: ./tts
+    ports:
+      - "8081:8081"
+    restart: always
+    volumes:
+      - hf_cache:/root/.cache/huggingface
+
+volumes:
+  hf_cache:
