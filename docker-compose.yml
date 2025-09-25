@@ -8,29 +8,18 @@ services:
     shm_size: "16gb"
     restart: always
     command: >
-      --model NousResearch/Nous-Hermes-3-Llama-3.1-8B
+      --model NousResearch/Hermes-4-14B
       --host 0.0.0.0
       --port 8000
       --trust-remote-code
-      --gpu-memory-utilization 0.92
-      --max-model-len 8192
-      --max-num-batched-tokens 32768
-      --max-num-seqs 256
+      --gpu-memory-utilization 0.88
+      --max-model-len 4096
+      --max-num-batched-tokens 16384
+      --max-num-seqs 128
     volumes:
       - hf_cache:/root/.cache/huggingface
     deploy:
       resources:
         reservations:
           devices:
-            - capabilities: [gpu]
-
-  tts:
-    build: ./tts
-    ports:
-      - "8081:8081"
-    restart: always
-    volumes:
-      - hf_cache:/root/.cache/huggingface
-
-volumes:
-  hf_cache:
+            - capabilities:
