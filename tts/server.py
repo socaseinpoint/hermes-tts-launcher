@@ -23,7 +23,7 @@ except Exception as e:
 
 class TTSRequest(BaseModel):
     text: str
-    speaker: str = "p225"  # Default speaker for VCTK model
+    speaker: str = None  # Optional speaker
 
 @app.get("/")
 def health_check():
