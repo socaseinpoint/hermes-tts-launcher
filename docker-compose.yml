@@ -31,6 +31,8 @@ services:
     ports:
       - "8081:8081"
     restart: always
+    env_file:
+      - .env
     volumes:
       - hf_cache:/root/.cache/huggingface
 
