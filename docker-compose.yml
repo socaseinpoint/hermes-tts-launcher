@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   llm:
-    image: vllm/vllm-openai:0.2.4.post1
+    image: vllm/vllm-openai:0.2.3
     ports:
       - "8000:8000"
     shm_size: "16gb"
