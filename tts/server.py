@@ -11,7 +11,7 @@ app = FastAPI()
 
 # Initialize Coqui TTS
 # You can choose different models from: https://github.com/coqui-ai/TTS#-pretrained-models
-model_name = "tts_models/en/vctk/vits"  # Good quality English model
+model_name = "tts_models/en/ljspeech/tacotron2-DDC"  # Single speaker model
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 try:
@@ -36,12 +36,19 @@ def get_speakers():
         raise HTTPException(status_code=500, detail="TTS model not loaded")
     
     try:
-        if hasattr(tts.tts, 'speakers'):
-            return {"speakers": tts.tts.speakers}
+        # Try different ways to get speakers
+        speakers = None
+        if hasattr(tts.tts, 'speakers') and tts.tts.speakers:
+            speakers = tts.tts.speakers
+        elif hasattr(tts, 'speakers') and tts.speakers:
+            speakers = tts.speakers
+        
+        if speakers:
+            return {"speakers": speakers}
         else:
-            return {"message": "This model doesn't support multiple speakers"}
+            return {"message": "This model doesn't support multiple speakers", "model": model_name}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"error": str(e), "model": model_name}
 
 @app.post("/tts")
 def text_to_speech(req: TTSRequest):
@@ -52,17 +59,29 @@ def text_to_speech(req: TTSRequest):
         # Generate audio
         temp_path = f"/tmp/{uuid.uuid4().hex}.wav"
         
-        # Check if model supports speakers
-        if hasattr(tts.tts, 'speakers') and tts.tts.speakers:
-            # Use specified speaker or first available
-            if req.speaker and req.speaker in tts.tts.speakers:
-                speaker = req.speaker
+        # Try to generate TTS
+        try:
+            # First try with speaker if provided and model supports it
+            speakers = None
+            if hasattr(tts.tts, 'speakers') and tts.tts.speakers:
+                speakers = tts.tts.speakers
+            elif hasattr(tts, 'speakers') and tts.speakers:
+                speakers = tts.speakers
+            
+            if speakers and req.speaker and req.speaker in speakers:
+                tts.tts_to_file(text=req.text, speaker=req.speaker, file_path=temp_path)
+            elif speakers:
+                # Use first available speaker
+                tts.tts_to_file(text=req.text, speaker=speakers[0], file_path=temp_path)
             else:
-                speaker = tts.tts.speakers[0]  # Use first available speaker
-            tts.tts_to_file(text=req.text, speaker=speaker, file_path=temp_path)
-        else:
-            # Model doesn't support speakers
-            tts.tts_to_file(text=req.text, file_path=temp_path)
+                # Single speaker model
+                tts.tts_to_file(text=req.text, file_path=temp_path)
+        except Exception as tts_error:
+            # Fallback: try without speaker
+            try:
+                tts.tts_to_file(text=req.text, file_path=temp_path)
+            except Exception as fallback_error:
+                raise Exception(f"TTS failed: {tts_error}, Fallback failed: {fallback_error}")
 
         # Read the generated audio file
         with open(temp_path, "rb") as f:
