@@ -54,8 +54,11 @@ def text_to_speech(req: TTSRequest):
         
         # Check if model supports speakers
         if hasattr(tts.tts, 'speakers') and tts.tts.speakers:
-            # Use specified speaker or default
-            speaker = req.speaker if req.speaker in tts.tts.speakers else tts.tts.speakers[0]
+            # Use specified speaker or first available
+            if req.speaker and req.speaker in tts.tts.speakers:
+                speaker = req.speaker
+            else:
+                speaker = tts.tts.speakers[0]  # Use first available speaker
             tts.tts_to_file(text=req.text, speaker=speaker, file_path=temp_path)
         else:
             # Model doesn't support speakers
