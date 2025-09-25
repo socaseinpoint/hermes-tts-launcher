@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  llm:
+    image: vllm/vllm-openai:latest
+    ports:
+      - "8000:8000"
+    shm_size: "16gb"
+    restart: always
+    command: >
+      --model NousResearch/Nous-Hermes-3-Llama-3.1-8B
+      --host 0.0.0.0
+      --port 8000
+      --trust-remote-code
+      --gpu-memory-utilization 0.92
+      --max-model-len 8192
+      --max-num-batched-tokens 32768
+      --max-num-seqs 256
+    volumes:
+      - hf_cache:/root/.cache/huggingface
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+
+  tts:
+    build: ./tts
+    ports:
+      - "8081:8081"
+    restart: always
+    volumes:
+      - hf_cache:/root/.cache/huggingface
+
+volumes:
+  hf_cache:
